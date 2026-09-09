@@ -2,7 +2,7 @@ const CACHE_NAME = "screenexam-v1";
 
 const FILES = [
   "./",
-  "./screentest.html",
+  "./index.html",
   "./manifest.json"
 ];
 
