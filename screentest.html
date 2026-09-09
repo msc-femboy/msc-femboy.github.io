@@ -1,24 +1,23 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
   >
 
   <title>screenexam</title>
 
-  <!-- iPhone PWA -->
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- iPhone / iPad -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="screenexam">
-
-  <!-- Android -->
   <meta name="mobile-web-app-capable" content="yes">
-
-  <link rel="manifest" href="manifest.json">
 
   <style>
     * {
@@ -30,210 +29,184 @@
     body {
       margin: 0;
       padding: 0;
-
       width: 100%;
       height: 100%;
-
       overflow: hidden;
-
-      background: black;
-
-      font-family: sans-serif;
-
-      user-select: none;
-      -webkit-user-select: none;
-
+      background: #000;
       touch-action: none;
+      overscroll-behavior: none;
     }
 
     body {
       position: fixed;
       inset: 0;
+      font-family: Arial, sans-serif;
     }
 
     #canvas {
       position: fixed;
-      inset: 0;
-
-      width: 100vw;
-      height: 100vh;
-
+      left: 0;
+      top: 0;
       width: 100dvw;
       height: 100dvh;
-
       display: block;
-
-      touch-action: none;
+      background: #000;
     }
 
-    /* Панель */
+    /* Controls */
 
-    .ui {
+    #controls {
       position: fixed;
+      z-index: 10;
 
       top: calc(10px + env(safe-area-inset-top));
       left: calc(10px + env(safe-area-inset-left));
 
-      z-index: 10;
-
       display: flex;
-      align-items: center;
       flex-wrap: wrap;
+      gap: 8px;
 
-      gap: 10px;
+      max-width: calc(
+        100vw - 20px -
+        env(safe-area-inset-left) -
+        env(safe-area-inset-right)
+      );
 
-      max-width: calc(100vw - 50px);
-
-      padding: 10px 15px;
-
-      border-radius: 8px;
-
-      background: rgba(0, 0, 0, .65);
-
-      color: white;
-    }
-
-    .ui button {
-      padding: 7px 11px;
-
-      border: 0;
-      border-radius: 6px;
-
-      background: #444;
-      color: white;
-
-      font-size: 14px;
-
-      cursor: pointer;
-
-      touch-action: manipulation;
-    }
-
-    .ui button:active {
-      background: #666;
-    }
-
-    /* Цвета */
-
-    .color-buttons {
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-    }
-
-    .color-btn {
-      width: 30px;
-      height: 30px;
-
-      border: 1px solid white;
-      border-radius: 4px;
-
-      cursor: pointer;
-
-      touch-action: manipulation;
-    }
-
-    /* Кнопка X */
-
-    .toggle-button {
-      position: fixed;
-
-      top: calc(5px + env(safe-area-inset-top));
-      right: calc(5px + env(safe-area-inset-right));
-
-      z-index: 20;
-
-      width: 30px;
-      height: 30px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: transparent;
-
-      cursor: pointer;
-
-      touch-action: manipulation;
-    }
-
-    .toggle-button span {
-      color: white;
-
-      font-size: 14px;
-
-      opacity: .6;
-    }
-
-    /* Кнопка выхода из fullscreen */
-
-    #exitFullscreen {
-      position: fixed;
-
-      top: calc(12px + env(safe-area-inset-top));
-      right: calc(12px + env(safe-area-inset-right));
-
-      z-index: 100;
-
-      display: none;
-
-      padding: 10px 14px;
-
-      border: 0;
-      border-radius: 8px;
-
-      background: rgba(0, 0, 0, .75);
-      color: white;
-
-      font-size: 15px;
-
-      touch-action: manipulation;
-    }
-
-    /*
-      Подсказка для Safari,
-      если страница ещё не установлена
-    */
-
-    #installHint {
-      position: fixed;
-
-      left: 50%;
-      bottom: calc(20px + env(safe-area-inset-bottom));
-
-      transform: translateX(-50%);
-
-      z-index: 200;
-
-      display: none;
-
-      width: calc(100% - 40px);
-      max-width: 420px;
-
-      padding: 16px;
+      padding: 8px;
 
       border-radius: 12px;
 
-      background: rgba(20, 20, 20, .95);
-      color: white;
-
-      text-align: center;
-
-      line-height: 1.45;
-
-      font-size: 14px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
-    #installHint button {
-      margin-top: 12px;
+    button {
+      border: 1px solid #777;
+      border-radius: 8px;
 
-      padding: 8px 14px;
+      padding: 9px 12px;
 
-      border: 0;
-      border-radius: 7px;
-
-      background: #444;
+      background: #222;
       color: white;
+
+      font-size: 14px;
+      font-weight: 600;
+
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .color-button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: 50%;
+    }
+
+    #blackBtn {
+      background: #000;
+    }
+
+    #whiteBtn {
+      background: #fff;
+    }
+
+    #gray30Btn {
+      background: #303030;
+    }
+
+    #gray80Btn {
+      background: #808080;
+    }
+
+    #redBtn {
+      background: red;
+    }
+
+    #blueBtn {
+      background: blue;
+    }
+
+    #greenBtn {
+      background: green;
+    }
+
+    #yellowBtn {
+      background: yellow;
+    }
+
+    #purpleBtn {
+      background: purple;
+    }
+
+    #toggleUI {
+      position: fixed;
+      z-index: 20;
+
+      top: calc(10px + env(safe-area-inset-top));
+      right: calc(10px + env(safe-area-inset-right));
+
+      width: 42px;
+      height: 42px;
+
+      padding: 0;
+
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.75);
+    }
+
+    #installHint {
+      position: fixed;
+      z-index: 15;
+
+      left: 50%;
+      bottom: calc(15px + env(safe-area-inset-bottom));
+
+      transform: translateX(-50%);
+
+      width: min(90vw, 420px);
+
+      padding: 12px 16px;
+
+      border-radius: 12px;
+
+      background: rgba(0, 0, 0, 0.82);
+      color: white;
+
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+
+      display: none;
+    }
+
+    #installHint strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    #closeHint {
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    /* When UI is hidden */
+
+    body.ui-hidden #controls,
+    body.ui-hidden #installHint {
+      display: none !important;
+    }
+
+    body.ui-hidden #toggleUI {
+      display: block;
     }
   </style>
 </head>
@@ -242,15 +215,14 @@
 
   <canvas id="canvas"></canvas>
 
-  <!-- UI -->
+  <!-- Main controls -->
+  <div id="controls">
 
-  <div class="ui" id="ui">
-
-    <button id="crossColorBtn">
+    <button id="invertBtn">
       Invert Crosses
     </button>
 
-    <button id="invertBtn">
+    <button id="visibilityBtn">
       Cross Visibility
     </button>
 
@@ -258,810 +230,577 @@
       Fullscreen
     </button>
 
-    <div
-      class="color-buttons"
-      id="colorButtons"
-    ></div>
-
-  </div>
-
-  <!-- X -->
-
-  <div
-    class="toggle-button"
-    id="toggleBtn"
-  >
-    <span>X</span>
-  </div>
-
-  <!-- Exit -->
-
-  <button id="exitFullscreen">
-    ✕ Exit Fullscreen
-  </button>
-
-  <!-- Install hint -->
-
-  <div id="installHint">
-
-    <div>
-      Чтобы убрать Safari полностью,
-      добавьте страницу на экран «Домой».
-    </div>
-
-    <div>
-      В Safari нажмите
-      <b>Поделиться → На экран «Домой»</b>.
-    </div>
-
-    <button id="closeHint">
-      Понятно
+    <button id="clearBtn">
+      Clear
     </button>
 
+    <!-- Colors -->
+    <button
+      id="blackBtn"
+      class="color-button"
+      title="Black"
+      aria-label="Black"
+    ></button>
+
+    <button
+      id="whiteBtn"
+      class="color-button"
+      title="White"
+      aria-label="White"
+    ></button>
+
+    <button
+      id="gray30Btn"
+      class="color-button"
+      title="Dark gray"
+      aria-label="Dark gray"
+    ></button>
+
+    <button
+      id="gray80Btn"
+      class="color-button"
+      title="Gray"
+      aria-label="Gray"
+    ></button>
+
+    <button
+      id="redBtn"
+      class="color-button"
+      title="Red"
+      aria-label="Red"
+    ></button>
+
+    <button
+      id="blueBtn"
+      class="color-button"
+      title="Blue"
+      aria-label="Blue"
+    ></button>
+
+    <button
+      id="greenBtn"
+      class="color-button"
+      title="Green"
+      aria-label="Green"
+    ></button>
+
+    <button
+      id="yellowBtn"
+      class="color-button"
+      title="Yellow"
+      aria-label="Yellow"
+    ></button>
+
+    <button
+      id="purpleBtn"
+      class="color-button"
+      title="Purple"
+      aria-label="Purple"
+    ></button>
+
   </div>
 
+  <!-- Hide/show UI -->
+  <button id="toggleUI">✕</button>
+
+  <!-- PWA hint -->
+  <div id="installHint">
+    <strong>For true fullscreen on iPhone</strong>
+
+    Open this page in Safari and choose
+    <b>Share → Add to Home Screen</b>.
+
+    Then launch <b>screenexam</b> from the Home Screen.
+
+    <br>
+
+    <button id="closeHint">
+      Close
+    </button>
+  </div>
 
   <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
 
-    const canvas =
-      document.getElementById("canvas");
+    let crossColor = "#ffffff";
+    let backgroundColor = "#000000";
 
-    const ctx =
-      canvas.getContext("2d", {
-        alpha: false
+    let crossesVisible = true;
+
+    const CROSS_STEP = 45;
+    const CROSS_SIZE = 25;
+    const CROSS_THICKNESS = 5;
+
+    let touches = new Map();
+
+    /* --------------------------------------------------
+       Canvas size
+    -------------------------------------------------- */
+
+    function resizeCanvas() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      draw();
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    window.addEventListener("orientationchange", resizeCanvas);
+
+    /* --------------------------------------------------
+       Draw everything
+    -------------------------------------------------- */
+
+    function draw() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      // Background
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+
+      // Crosses
+      if (crossesVisible) {
+        drawCrosses();
+      }
+
+      // Touch points
+      drawTouchPoints();
+    }
+
+    function drawCrosses() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      ctx.fillStyle = crossColor;
+
+      for (let y = 0; y <= height; y += CROSS_STEP) {
+        for (let x = 0; x <= width; x += CROSS_STEP) {
+
+          const half = CROSS_SIZE / 2;
+          const thickness = CROSS_THICKNESS;
+
+          // Horizontal
+          ctx.fillRect(
+            x - half,
+            y - thickness / 2,
+            CROSS_SIZE,
+            thickness
+          );
+
+          // Vertical
+          ctx.fillRect(
+            x - thickness / 2,
+            y - half,
+            thickness,
+            CROSS_SIZE
+          );
+        }
+      }
+    }
+
+    /* --------------------------------------------------
+       Touch points
+    -------------------------------------------------- */
+
+    function drawTouchPoints() {
+      ctx.fillStyle = "#00ff00";
+
+      touches.forEach((point) => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    /* --------------------------------------------------
+       Mouse
+    -------------------------------------------------- */
+
+    canvas.addEventListener("mousedown", (event) => {
+      touches.set("mouse", {
+        x: event.clientX,
+        y: event.clientY
       });
 
+      draw();
+    });
 
-    const ui =
-      document.getElementById("ui");
+    canvas.addEventListener("mousemove", (event) => {
+      if (event.buttons) {
+        touches.set("mouse", {
+          x: event.clientX,
+          y: event.clientY
+        });
 
-    const toggleBtn =
-      document.getElementById("toggleBtn");
+        draw();
+      }
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      touches.delete("mouse");
+      draw();
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      touches.delete("mouse");
+      draw();
+    });
+
+    /* --------------------------------------------------
+       Touch
+    -------------------------------------------------- */
+
+    canvas.addEventListener(
+      "touchstart",
+      (event) => {
+        event.preventDefault();
+
+        for (const touch of event.changedTouches) {
+          touches.set(touch.identifier, {
+            x: touch.clientX,
+            y: touch.clientY
+          });
+        }
+
+        draw();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "touchmove",
+      (event) => {
+        event.preventDefault();
+
+        for (const touch of event.changedTouches) {
+          touches.set(touch.identifier, {
+            x: touch.clientX,
+            y: touch.clientY
+          });
+        }
+
+        draw();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "touchend",
+      (event) => {
+        event.preventDefault();
+
+        for (const touch of event.changedTouches) {
+          touches.delete(touch.identifier);
+        }
+
+        draw();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "touchcancel",
+      (event) => {
+        event.preventDefault();
+
+        for (const touch of event.changedTouches) {
+          touches.delete(touch.identifier);
+        }
+
+        draw();
+      },
+      { passive: false }
+    );
+
+    /* --------------------------------------------------
+       Buttons
+    -------------------------------------------------- */
+
+    document
+      .getElementById("invertBtn")
+      .addEventListener("click", () => {
+
+        if (crossColor === backgroundColor) {
+          crossColor = "#ffffff";
+        } else {
+          crossColor = backgroundColor;
+        }
+
+        draw();
+      });
+
+    document
+      .getElementById("visibilityBtn")
+      .addEventListener("click", () => {
+
+        crossesVisible = !crossesVisible;
+
+        draw();
+      });
+
+    document
+      .getElementById("clearBtn")
+      .addEventListener("click", () => {
+
+        touches.clear();
+
+        draw();
+      });
+
+    /* --------------------------------------------------
+       Background colors
+    -------------------------------------------------- */
+
+    function setBackground(color) {
+      backgroundColor = color;
+
+      // If crosses have same color as background,
+      // automatically make them visible.
+      if (crossColor === backgroundColor) {
+        crossColor = "#ffffff";
+      }
+
+      draw();
+    }
+
+    document
+      .getElementById("blackBtn")
+      .addEventListener("click", () => {
+        setBackground("#000000");
+      });
+
+    document
+      .getElementById("whiteBtn")
+      .addEventListener("click", () => {
+        setBackground("#ffffff");
+      });
+
+    document
+      .getElementById("gray30Btn")
+      .addEventListener("click", () => {
+        setBackground("#303030");
+      });
+
+    document
+      .getElementById("gray80Btn")
+      .addEventListener("click", () => {
+        setBackground("#808080");
+      });
+
+    document
+      .getElementById("redBtn")
+      .addEventListener("click", () => {
+        setBackground("#ff0000");
+      });
+
+    document
+      .getElementById("blueBtn")
+      .addEventListener("click", () => {
+        setBackground("#0000ff");
+      });
+
+    document
+      .getElementById("greenBtn")
+      .addEventListener("click", () => {
+        setBackground("#008000");
+      });
+
+    document
+      .getElementById("yellowBtn")
+      .addEventListener("click", () => {
+        setBackground("#ffff00");
+      });
+
+    document
+      .getElementById("purpleBtn")
+      .addEventListener("click", () => {
+        setBackground("#800080");
+      });
+
+    /* --------------------------------------------------
+       UI toggle
+    -------------------------------------------------- */
+
+    const toggleUI = document.getElementById("toggleUI");
+
+    toggleUI.addEventListener("click", () => {
+
+      document.body.classList.toggle("ui-hidden");
+
+      if (document.body.classList.contains("ui-hidden")) {
+        toggleUI.textContent = "☰";
+      } else {
+        toggleUI.textContent = "✕";
+      }
+    });
+
+    /* --------------------------------------------------
+       Fullscreen
+       
+       IMPORTANT:
+       On iPhone Safari, requestFullscreen() is not
+       reliable for normal web pages.
+
+       In PWA standalone mode, the app itself is already
+       displayed without Safari's address/navigation bars.
+    -------------------------------------------------- */
 
     const fullscreenBtn =
       document.getElementById("fullscreenBtn");
 
-    const exitFullscreenBtn =
-      document.getElementById("exitFullscreen");
+    function isStandalone() {
+      return (
+        window.navigator.standalone === true ||
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: fullscreen)").matches
+      );
+    }
 
-    const crossColorBtn =
-      document.getElementById("crossColorBtn");
+    fullscreenBtn.addEventListener("click", async () => {
 
-    const invertBtn =
-      document.getElementById("invertBtn");
+      // iPhone/iPad PWA
+      if (isStandalone()) {
+
+        document.body.classList.add("ui-hidden");
+        toggleUI.textContent = "☰";
+
+        draw();
+
+        return;
+      }
+
+      // Try normal Fullscreen API on browsers that support it
+      try {
+
+        if (
+          document.fullscreenElement ||
+          document.webkitFullscreenElement
+        ) {
+
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+
+        } else {
+
+          if (canvas.requestFullscreen) {
+            await canvas.requestFullscreen();
+          } else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitRequestFullscreen();
+          } else {
+            showInstallHint();
+          }
+
+        }
+
+      } catch (error) {
+
+        console.log(
+          "Fullscreen API unavailable:",
+          error
+        );
+
+        showInstallHint();
+      }
+
+      draw();
+    });
+
+    /* --------------------------------------------------
+       Install hint
+    -------------------------------------------------- */
 
     const installHint =
       document.getElementById("installHint");
 
-    const closeHint =
-      document.getElementById("closeHint");
-
-
-    let invertMode = false;
-
-    let crossColor = "white";
-
-    let bgColor = "black";
-
-    let touches = [];
-
-    let width = 0;
-
-    let height = 0;
-
-
-    /* ==========================
-       PWA / STANDALONE
-    ========================== */
-
-    function isStandalone() {
-
-      return (
-        window.navigator.standalone === true ||
-        window.matchMedia(
-          "(display-mode: standalone)"
-        ).matches ||
-        window.matchMedia(
-          "(display-mode: fullscreen)"
-        ).matches
-      );
-
+    function showInstallHint() {
+      installHint.style.display = "block";
     }
 
+    document
+      .getElementById("closeHint")
+      .addEventListener("click", () => {
+        installHint.style.display = "none";
+      });
 
-    /* ==========================
-       RESIZE
-    ========================== */
+    // Show installation hint only when NOT running
+    // as an installed PWA.
+    window.addEventListener("load", () => {
 
-    function resizeCanvas() {
-
-      width =
-        window.innerWidth;
-
-      height =
-        window.innerHeight;
-
-
-      const dpr =
-        Math.min(
-          window.devicePixelRatio || 1,
-          3
-        );
-
-
-      canvas.width =
-        Math.round(width * dpr);
-
-      canvas.height =
-        Math.round(height * dpr);
-
-
-      canvas.style.width =
-        width + "px";
-
-      canvas.style.height =
-        height + "px";
-
-
-      ctx.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0
-      );
-
-
-      drawCrosses();
-
-    }
-
-
-    /* ==========================
-       DRAW
-    ========================== */
-
-    function drawCrosses() {
-
-      /*
-        Background
-      */
-
-      ctx.fillStyle =
-        bgColor;
-
-      ctx.fillRect(
-        0,
-        0,
-        width,
-        height
-      );
-
-
-      /*
-        Crosses
-      */
-
-      if (!invertMode) {
-
-        ctx.fillStyle =
-          crossColor;
-
-
-        const step = 45;
-
-        const crossSize = 25;
-
-        const thickness = 5;
-
-
-        for (
-          let y = step / 2;
-          y < height;
-          y += step
-        ) {
-
-          for (
-            let x = step / 2;
-            x < width;
-            x += step
-          ) {
-
-            drawCross(
-              x,
-              y,
-              crossSize,
-              thickness
-            );
-
-          }
-
-        }
-
+      if (!isStandalone()) {
+        setTimeout(() => {
+          showInstallHint();
+        }, 1000);
       }
-
-
-      /*
-        Touch circles
-      */
-
-      ctx.fillStyle =
-        "rgba(5,130,0,.9)";
-
-
-      for (const touch of touches) {
-
-        ctx.beginPath();
-
-        ctx.arc(
-          touch.x,
-          touch.y,
-          30,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-      }
-
-    }
-
-
-    function drawCross(
-      x,
-      y,
-      size,
-      thickness
-    ) {
-
-      ctx.fillRect(
-        x - thickness / 2,
-        y - size / 2,
-        thickness,
-        size
-      );
-
-
-      ctx.fillRect(
-        x - size / 2,
-        y - thickness / 2,
-        size,
-        thickness
-      );
-
-    }
-
-
-    /* ==========================
-       CROSS COLOR
-    ========================== */
-
-    crossColorBtn.addEventListener(
-      "click",
-      () => {
-
-        crossColor =
-          crossColor === "white"
-            ? "black"
-            : "white";
-
-        drawCrosses();
-
-      }
-    );
-
-
-    /* ==========================
-       CROSS VISIBILITY
-    ========================== */
-
-    invertBtn.addEventListener(
-      "click",
-      () => {
-
-        invertMode =
-          !invertMode;
-
-        drawCrosses();
-
-      }
-    );
-
-
-    /* ==========================
-       COLORS
-    ========================== */
-
-    const colors = [
-      "black",
-      "white",
-      "#303030",
-      "#808080",
-      "red",
-      "blue",
-      "green",
-      "yellow",
-      "purple"
-    ];
-
-
-    const colorButtons =
-      document.getElementById(
-        "colorButtons"
-      );
-
-
-    colors.forEach(
-      color => {
-
-        const button =
-          document.createElement(
-            "div"
-          );
-
-
-        button.className =
-          "color-btn";
-
-
-        button.style.backgroundColor =
-          color;
-
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            bgColor = color;
-
-            drawCrosses();
-
-          }
-        );
-
-
-        colorButtons.appendChild(
-          button
-        );
-
-      }
-    );
-
-
-    /* ==========================
-       UI TOGGLE
-    ========================== */
-
-    let uiVisible = true;
-
-
-    toggleBtn.addEventListener(
-      "click",
-      () => {
-
-        uiVisible =
-          !uiVisible;
-
-
-        ui.style.display =
-          uiVisible
-            ? "flex"
-            : "none";
-
-      }
-    );
-
-
-    /* ==========================
-       FULLSCREEN
-    ========================== */
-
-    fullscreenBtn.addEventListener(
-      "click",
-      async () => {
-
-        /*
-          Если уже PWA —
-          мы уже без Safari UI.
-        */
-
-        if (isStandalone()) {
-
-          ui.style.display =
-            "none";
-
-          toggleBtn.style.display =
-            "none";
-
-          exitFullscreenBtn.style.display =
-            "block";
-
-          return;
-        }
-
-
-        /*
-          Если браузер поддерживает
-          обычный Fullscreen API.
-        */
-
-        if (
-          document.documentElement
-            .requestFullscreen
-        ) {
-
-          try {
-
-            await document.documentElement
-              .requestFullscreen();
-
-
-            ui.style.display =
-              "none";
-
-            toggleBtn.style.display =
-              "none";
-
-            exitFullscreenBtn.style.display =
-              "block";
-
-            return;
-
-          } catch (error) {
-
-            console.log(
-              "Fullscreen:",
-              error
-            );
-
-          }
-
-        }
-
-
-        /*
-          iPhone Safari.
-          Показываем инструкцию.
-        */
-
-        installHint.style.display =
-          "block";
-
-      }
-    );
-
-
-    /* ==========================
-       EXIT FULLSCREEN
-    ========================== */
-
-    exitFullscreenBtn.addEventListener(
-      "click",
-      async () => {
-
-        /*
-          Browser fullscreen
-        */
-
-        if (
-          document.fullscreenElement
-        ) {
-
-          try {
-
-            await document.exitFullscreen();
-
-          } catch (error) {
-
-            console.log(error);
-
-          }
-
-        }
-
-
-        /*
-          В PWA кнопка выхода
-          просто возвращает UI.
-        */
-
-        ui.style.display =
-          "flex";
-
-        toggleBtn.style.display =
-          "flex";
-
-        exitFullscreenBtn.style.display =
-          "none";
-
-      }
-    );
-
-
-    /* ==========================
-       FULLSCREEN CHANGE
-    ========================== */
+    });
+
+    /* --------------------------------------------------
+       Fullscreen change
+    -------------------------------------------------- */
 
     document.addEventListener(
       "fullscreenchange",
       () => {
-
-        if (
-          !document.fullscreenElement
-        ) {
-
-          ui.style.display =
-            "flex";
-
-          toggleBtn.style.display =
-            "flex";
-
-          exitFullscreenBtn.style.display =
-            "none";
-
-        }
-
+        draw();
       }
     );
 
-
-    /* ==========================
-       CLOSE INSTALL HINT
-    ========================== */
-
-    closeHint.addEventListener(
-      "click",
+    document.addEventListener(
+      "webkitfullscreenchange",
       () => {
-
-        installHint.style.display =
-          "none";
-
+        draw();
       }
     );
 
+    /* --------------------------------------------------
+       Service Worker
+    -------------------------------------------------- */
 
-    /* ==========================
-       TOUCH
-    ========================== */
+    if ("serviceWorker" in navigator) {
 
-    function updateTouches(e) {
+      window.addEventListener("load", () => {
 
-      const rect =
-        canvas.getBoundingClientRect();
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
 
+            console.log(
+              "Service Worker registered:",
+              registration.scope
+            );
 
-      touches = [];
+          })
+          .catch((error) => {
 
+            console.log(
+              "Service Worker registration failed:",
+              error
+            );
 
-      for (
-        const touch of e.touches
-      ) {
+          });
 
-        touches.push({
-
-          x:
-            touch.clientX -
-            rect.left,
-
-          y:
-            touch.clientY -
-            rect.top
-
-        });
-
-      }
-
-
-      drawCrosses();
-
+      });
     }
 
-
-    canvas.addEventListener(
-      "touchstart",
-      e => {
-
-        e.preventDefault();
-
-        updateTouches(e);
-
-      },
-      {
-        passive: false
-      }
-    );
-
-
-    canvas.addEventListener(
-      "touchmove",
-      e => {
-
-        e.preventDefault();
-
-        updateTouches(e);
-
-      },
-      {
-        passive: false
-      }
-    );
-
-
-    canvas.addEventListener(
-      "touchend",
-      e => {
-
-        e.preventDefault();
-
-        touches = [];
-
-        drawCrosses();
-
-      },
-      {
-        passive: false
-      }
-    );
-
-
-    canvas.addEventListener(
-      "touchcancel",
-      e => {
-
-        e.preventDefault();
-
-        touches = [];
-
-        drawCrosses();
-
-      },
-      {
-        passive: false
-      }
-    );
-
-
-    /* ==========================
-       MOUSE
-    ========================== */
-
-    canvas.addEventListener(
-      "mousedown",
-      e => {
-
-        const rect =
-          canvas.getBoundingClientRect();
-
-        touches = [{
-          x:
-            e.clientX -
-            rect.left,
-
-          y:
-            e.clientY -
-            rect.top
-        }];
-
-        drawCrosses();
-
-      }
-    );
-
-
-    canvas.addEventListener(
-      "mousemove",
-      e => {
-
-        if (!e.buttons)
-          return;
-
-
-        const rect =
-          canvas.getBoundingClientRect();
-
-
-        touches = [{
-          x:
-            e.clientX -
-            rect.left,
-
-          y:
-            e.clientY -
-            rect.top
-        }];
-
-
-        drawCrosses();
-
-      }
-    );
-
-
-    canvas.addEventListener(
-      "mouseup",
-      () => {
-
-        touches = [];
-
-        drawCrosses();
-
-      }
-    );
-
-
-    /* ==========================
-       RESIZE
-    ========================== */
-
-    window.addEventListener(
-      "resize",
-      resizeCanvas
-    );
-
-
-    window.addEventListener(
-      "orientationchange",
-      () => {
-
-        setTimeout(
-          resizeCanvas,
-          300
-        );
-
-      }
-    );
-
-
-    /* ==========================
-       INIT
-    ========================== */
+    /* --------------------------------------------------
+       Start
+    -------------------------------------------------- */
 
     resizeCanvas();
-
-
-    /*
-      Если приложение уже запущено
-      как PWA — показываем кнопку Exit.
-    */
-
-    if (isStandalone()) {
-
-      fullscreenBtn.textContent =
-        "Fullscreen";
-
-    }
-
-
-    /*
-      Service Worker
-    */
-
-    if (
-      "serviceWorker" in navigator
-    ) {
-
-      window.addEventListener(
-        "load",
-        () => {
-
-          navigator.serviceWorker
-            .register("./sw.js")
-            .catch(error => {
-
-              console.log(
-                "Service Worker:",
-                error
-              );
-
-            });
-
-        }
-      );
-
-    }
-
   </script>
 
 </body>
