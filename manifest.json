@@ -1,7 +1,7 @@
 {
   "name": "screenexam",
   "short_name": "screenexam",
-  "start_url": "/screentest.html",
+  "start_url": "/",
   "scope": "/",
   "display": "fullscreen",
   "orientation": "any",
