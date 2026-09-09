@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
 
@@ -10,19 +10,45 @@
 
   <title>screenexam</title>
 
+  <!-- iPhone PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="screenexam">
+
+  <!-- Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <link rel="manifest" href="manifest.json">
+
   <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html,
     body {
       margin: 0;
       padding: 0;
+
       width: 100%;
       height: 100%;
+
       overflow: hidden;
+
       background: black;
+
       font-family: sans-serif;
-      touch-action: none;
+
       user-select: none;
       -webkit-user-select: none;
+
+      touch-action: none;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
     }
 
     #canvas {
@@ -36,26 +62,11 @@
       height: 100dvh;
 
       display: block;
-      background: black;
 
       touch-action: none;
     }
 
-    /*
-      Video используется только как "fullscreen bridge".
-      В обычном режиме он скрыт.
-    */
-    #fullscreenVideo {
-      position: fixed;
-      left: 0;
-      top: 0;
-
-      width: 1px;
-      height: 1px;
-
-      opacity: 0;
-      pointer-events: none;
-    }
+    /* Панель */
 
     .ui {
       position: fixed;
@@ -63,21 +74,23 @@
       top: calc(10px + env(safe-area-inset-top));
       left: calc(10px + env(safe-area-inset-left));
 
-      z-index: 100;
+      z-index: 10;
 
       display: flex;
       align-items: center;
       flex-wrap: wrap;
+
       gap: 10px;
 
       max-width: calc(100vw - 50px);
 
       padding: 10px 15px;
 
-      color: white;
+      border-radius: 8px;
+
       background: rgba(0, 0, 0, .65);
 
-      border-radius: 8px;
+      color: white;
     }
 
     .ui button {
@@ -86,12 +99,13 @@
       border: 0;
       border-radius: 6px;
 
-      color: white;
       background: #444;
+      color: white;
 
       font-size: 14px;
 
       cursor: pointer;
+
       touch-action: manipulation;
     }
 
@@ -99,32 +113,7 @@
       background: #666;
     }
 
-    .toggle-button {
-      position: fixed;
-
-      top: calc(5px + env(safe-area-inset-top));
-      right: calc(5px + env(safe-area-inset-right));
-
-      z-index: 110;
-
-      width: 30px;
-      height: 30px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      background: transparent;
-
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-
-    .toggle-button span {
-      color: white;
-      opacity: .6;
-      font-size: 14px;
-    }
+    /* Цвета */
 
     .color-buttons {
       display: flex;
@@ -140,78 +129,120 @@
       border-radius: 4px;
 
       cursor: pointer;
+
       touch-action: manipulation;
     }
 
-    /*
-      Кнопка выхода.
-      Работает для обычного Fullscreen API.
-      В iPhone native video fullscreen её скрывает Safari.
-    */
+    /* Кнопка X */
+
+    .toggle-button {
+      position: fixed;
+
+      top: calc(5px + env(safe-area-inset-top));
+      right: calc(5px + env(safe-area-inset-right));
+
+      z-index: 20;
+
+      width: 30px;
+      height: 30px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: transparent;
+
+      cursor: pointer;
+
+      touch-action: manipulation;
+    }
+
+    .toggle-button span {
+      color: white;
+
+      font-size: 14px;
+
+      opacity: .6;
+    }
+
+    /* Кнопка выхода из fullscreen */
+
     #exitFullscreen {
       position: fixed;
 
-      top: calc(15px + env(safe-area-inset-top));
-      right: calc(15px + env(safe-area-inset-right));
+      top: calc(12px + env(safe-area-inset-top));
+      right: calc(12px + env(safe-area-inset-right));
 
-      z-index: 200;
+      z-index: 100;
 
       display: none;
 
-      padding: 10px 15px;
+      padding: 10px 14px;
 
       border: 0;
       border-radius: 8px;
 
+      background: rgba(0, 0, 0, .75);
       color: white;
-      background: rgba(0, 0, 0, .7);
 
       font-size: 15px;
 
       touch-action: manipulation;
     }
 
-    #status {
+    /*
+      Подсказка для Safari,
+      если страница ещё не установлена
+    */
+
+    #installHint {
       position: fixed;
 
       left: 50%;
-      bottom: calc(15px + env(safe-area-inset-bottom));
+      bottom: calc(20px + env(safe-area-inset-bottom));
 
       transform: translateX(-50%);
 
-      z-index: 150;
+      z-index: 200;
 
       display: none;
 
-      padding: 8px 12px;
+      width: calc(100% - 40px);
+      max-width: 420px;
 
-      border-radius: 8px;
+      padding: 16px;
 
+      border-radius: 12px;
+
+      background: rgba(20, 20, 20, .95);
       color: white;
-      background: rgba(0, 0, 0, .75);
 
-      font-size: 13px;
       text-align: center;
+
+      line-height: 1.45;
+
+      font-size: 14px;
+    }
+
+    #installHint button {
+      margin-top: 12px;
+
+      padding: 8px 14px;
+
+      border: 0;
+      border-radius: 7px;
+
+      background: #444;
+      color: white;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Основной интерактивный canvas -->
   <canvas id="canvas"></canvas>
 
-  <!--
-    Video bridge для iPhone Safari native fullscreen.
-    canvas.captureStream() передаёт изображение сюда.
-  -->
-  <video
-    id="fullscreenVideo"
-    playsinline
-    muted
-    autoplay
-    webkit-playsinline
-  ></video>
+  <!-- UI -->
 
   <div class="ui" id="ui">
 
@@ -227,30 +258,65 @@
       Fullscreen
     </button>
 
-    <div class="color-buttons" id="colorButtons"></div>
+    <div
+      class="color-buttons"
+      id="colorButtons"
+    ></div>
 
   </div>
 
-  <div class="toggle-button" id="toggleBtn">
+  <!-- X -->
+
+  <div
+    class="toggle-button"
+    id="toggleBtn"
+  >
     <span>X</span>
   </div>
+
+  <!-- Exit -->
 
   <button id="exitFullscreen">
     ✕ Exit Fullscreen
   </button>
 
-  <div id="status"></div>
+  <!-- Install hint -->
+
+  <div id="installHint">
+
+    <div>
+      Чтобы убрать Safari полностью,
+      добавьте страницу на экран «Домой».
+    </div>
+
+    <div>
+      В Safari нажмите
+      <b>Поделиться → На экран «Домой»</b>.
+    </div>
+
+    <button id="closeHint">
+      Понятно
+    </button>
+
+  </div>
+
 
   <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d", {
-      alpha: false
-    });
 
-    const video = document.getElementById("fullscreenVideo");
+    const canvas =
+      document.getElementById("canvas");
 
-    const ui = document.getElementById("ui");
-    const toggleBtn = document.getElementById("toggleBtn");
+    const ctx =
+      canvas.getContext("2d", {
+        alpha: false
+      });
+
+
+    const ui =
+      document.getElementById("ui");
+
+    const toggleBtn =
+      document.getElementById("toggleBtn");
 
     const fullscreenBtn =
       document.getElementById("fullscreenBtn");
@@ -264,77 +330,78 @@
     const invertBtn =
       document.getElementById("invertBtn");
 
-    const status =
-      document.getElementById("status");
+    const installHint =
+      document.getElementById("installHint");
+
+    const closeHint =
+      document.getElementById("closeHint");
+
 
     let invertMode = false;
+
     let crossColor = "white";
+
     let bgColor = "black";
 
     let touches = [];
 
-    let cssWidth = 0;
-    let cssHeight = 0;
+    let width = 0;
 
-    let stream = null;
-
-    let videoFullscreen = false;
+    let height = 0;
 
 
-    /* =========================================
-       DEVICE
-    ========================================= */
+    /* ==========================
+       PWA / STANDALONE
+    ========================== */
 
-    function isIOS() {
+    function isStandalone() {
+
       return (
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (
-          navigator.platform === "MacIntel" &&
-          navigator.maxTouchPoints > 1
-        )
+        window.navigator.standalone === true ||
+        window.matchMedia(
+          "(display-mode: standalone)"
+        ).matches ||
+        window.matchMedia(
+          "(display-mode: fullscreen)"
+        ).matches
       );
+
     }
 
 
-    /* =========================================
-       STATUS
-    ========================================= */
-
-    function showStatus(text) {
-      status.textContent = text;
-      status.style.display = "block";
-
-      clearTimeout(showStatus.timer);
-
-      showStatus.timer = setTimeout(() => {
-        status.style.display = "none";
-      }, 2500);
-    }
-
-
-    /* =========================================
-       CANVAS RESIZE
-    ========================================= */
+    /* ==========================
+       RESIZE
+    ========================== */
 
     function resizeCanvas() {
 
-      const dpr =
-        Math.min(window.devicePixelRatio || 1, 3);
+      width =
+        window.innerWidth;
 
-      cssWidth = window.innerWidth;
-      cssHeight = window.innerHeight;
+      height =
+        window.innerHeight;
+
+
+      const dpr =
+        Math.min(
+          window.devicePixelRatio || 1,
+          3
+        );
+
 
       canvas.width =
-        Math.round(cssWidth * dpr);
+        Math.round(width * dpr);
 
       canvas.height =
-        Math.round(cssHeight * dpr);
+        Math.round(height * dpr);
+
 
       canvas.style.width =
-        cssWidth + "px";
+        width + "px";
 
       canvas.style.height =
-        cssHeight + "px";
+        height + "px";
+
 
       ctx.setTransform(
         dpr,
@@ -345,43 +412,59 @@
         0
       );
 
+
       drawCrosses();
+
     }
 
 
-    /* =========================================
+    /* ==========================
        DRAW
-    ========================================= */
+    ========================== */
 
     function drawCrosses() {
 
-      ctx.fillStyle = bgColor;
+      /*
+        Background
+      */
+
+      ctx.fillStyle =
+        bgColor;
 
       ctx.fillRect(
         0,
         0,
-        cssWidth,
-        cssHeight
+        width,
+        height
       );
 
 
+      /*
+        Crosses
+      */
+
       if (!invertMode) {
 
-        ctx.fillStyle = crossColor;
+        ctx.fillStyle =
+          crossColor;
+
 
         const step = 45;
+
         const crossSize = 25;
+
         const thickness = 5;
+
 
         for (
           let y = step / 2;
-          y < cssHeight;
+          y < height;
           y += step
         ) {
 
           for (
             let x = step / 2;
-            x < cssWidth;
+            x < width;
             x += step
           ) {
 
@@ -391,32 +474,38 @@
               crossSize,
               thickness
             );
+
           }
+
         }
+
       }
 
 
       /*
-        Touch indicators
+        Touch circles
       */
 
       ctx.fillStyle =
-        "rgba(5,130,0,0.9)";
+        "rgba(5,130,0,.9)";
 
-      for (const t of touches) {
+
+      for (const touch of touches) {
 
         ctx.beginPath();
 
         ctx.arc(
-          t.x,
-          t.y,
+          touch.x,
+          touch.y,
           30,
           0,
           Math.PI * 2
         );
 
         ctx.fill();
+
       }
+
     }
 
 
@@ -434,378 +523,20 @@
         size
       );
 
+
       ctx.fillRect(
         x - size / 2,
         y - thickness / 2,
         size,
         thickness
       );
+
     }
 
 
-    /* =========================================
-       CANVAS → VIDEO
-    ========================================= */
-
-    function createVideoStream() {
-
-      /*
-        Safari поддерживает canvas.captureStream
-        на современных версиях iOS.
-      */
-
-      if (!canvas.captureStream) {
-
-        showStatus(
-          "canvas.captureStream() is not supported"
-        );
-
-        return false;
-      }
-
-      try {
-
-        stream = canvas.captureStream(30);
-
-        video.srcObject = stream;
-
-        video.muted = true;
-        video.playsInline = true;
-
-        return true;
-
-      } catch (error) {
-
-        console.error(error);
-
-        return false;
-      }
-    }
-
-
-    /* =========================================
-       ENTER FULLSCREEN
-    ========================================= */
-
-    async function enterFullscreen() {
-
-      /*
-        Сначала создаём video stream
-      */
-
-      if (!stream) {
-
-        const success =
-          createVideoStream();
-
-        if (!success) {
-          return;
-        }
-      }
-
-
-      /*
-        Нужно начать воспроизведение
-        непосредственно после user gesture.
-      */
-
-      try {
-
-        await video.play();
-
-      } catch (error) {
-
-        console.log(
-          "video.play():",
-          error
-        );
-      }
-
-
-      /*
-        iPhone Safari
-      */
-
-      if (
-        isIOS() &&
-        video.webkitEnterFullscreen
-      ) {
-
-        try {
-
-          /*
-            Главное место обхода.
-
-            Safari переводит VIDEO
-            в native fullscreen.
-          */
-
-          video.webkitEnterFullscreen();
-
-          videoFullscreen = true;
-
-          ui.style.display = "none";
-          toggleBtn.style.display = "none";
-
-          showStatus(
-            "Fullscreen. Для выхода используйте кнопку Safari."
-          );
-
-          return;
-
-        } catch (error) {
-
-          console.error(
-            "iOS fullscreen error:",
-            error
-          );
-        }
-      }
-
-
-      /*
-        Обычный Fullscreen API
-      */
-
-      if (
-        video.requestFullscreen
-      ) {
-
-        try {
-
-          await video.requestFullscreen();
-
-          videoFullscreen = true;
-
-          ui.style.display = "none";
-          toggleBtn.style.display = "none";
-
-          exitFullscreenBtn.style.display =
-            "block";
-
-          return;
-
-        } catch (error) {
-
-          console.error(
-            "requestFullscreen error:",
-            error
-          );
-        }
-      }
-
-
-      /*
-        Safari / WebKit fallback
-      */
-
-      if (
-        video.webkitRequestFullscreen
-      ) {
-
-        try {
-
-          video.webkitRequestFullscreen();
-
-          videoFullscreen = true;
-
-          ui.style.display = "none";
-          toggleBtn.style.display = "none";
-
-        } catch (error) {
-
-          console.error(error);
-        }
-      }
-    }
-
-
-    /* =========================================
-       EXIT FULLSCREEN
-    ========================================= */
-
-    async function exitFullscreen() {
-
-      /*
-        Обычный Fullscreen API
-      */
-
-      if (
-        document.fullscreenElement
-      ) {
-
-        try {
-
-          await document.exitFullscreen();
-
-        } catch (error) {
-
-          console.error(error);
-        }
-      }
-
-
-      /*
-        WebKit
-      */
-
-      else if (
-        document.webkitFullscreenElement &&
-        document.webkitExitFullscreen
-      ) {
-
-        try {
-
-          document.webkitExitFullscreen();
-
-        } catch (error) {
-
-          console.error(error);
-        }
-      }
-
-
-      /*
-        iPhone native video fullscreen
-
-        У Safari нет гарантированного JS API
-        для принудительного закрытия
-        native video fullscreen во всех версиях iOS.
-
-        Поэтому здесь просто восстанавливаем UI,
-        когда Safari сообщает об окончании fullscreen.
-      */
-
-      videoFullscreen = false;
-
-      ui.style.display = "flex";
-      toggleBtn.style.display = "flex";
-
-      exitFullscreenBtn.style.display =
-        "none";
-
-      drawCrosses();
-    }
-
-
-    /* =========================================
-       FULLSCREEN BUTTON
-    ========================================= */
-
-    fullscreenBtn.addEventListener(
-      "click",
-      async () => {
-
-        await enterFullscreen();
-
-      }
-    );
-
-
-    /* =========================================
-       EXIT BUTTON
-    ========================================= */
-
-    exitFullscreenBtn.addEventListener(
-      "click",
-      async () => {
-
-        await exitFullscreen();
-
-      }
-    );
-
-
-    /* =========================================
-       FULLSCREEN EVENTS
-    ========================================= */
-
-    document.addEventListener(
-      "fullscreenchange",
-      () => {
-
-        const active =
-          !!document.fullscreenElement;
-
-        if (!active) {
-
-          videoFullscreen = false;
-
-          ui.style.display = "flex";
-          toggleBtn.style.display = "flex";
-
-          exitFullscreenBtn.style.display =
-            "none";
-        }
-      }
-    );
-
-
-    /*
-      WebKit fullscreen events
-    */
-
-    document.addEventListener(
-      "webkitfullscreenchange",
-      () => {
-
-        const active =
-          !!document.webkitFullscreenElement;
-
-        if (!active) {
-
-          videoFullscreen = false;
-
-          ui.style.display = "flex";
-          toggleBtn.style.display = "flex";
-
-          exitFullscreenBtn.style.display =
-            "none";
-        }
-      }
-    );
-
-
-    /*
-      Очень важно для iPhone:
-      Safari вызывает это событие,
-      когда native video fullscreen закрывается.
-    */
-
-    video.addEventListener(
-      "webkitendfullscreen",
-      () => {
-
-        videoFullscreen = false;
-
-        ui.style.display = "flex";
-        toggleBtn.style.display = "flex";
-
-        exitFullscreenBtn.style.display =
-          "none";
-
-        drawCrosses();
-
-      }
-    );
-
-
-    video.addEventListener(
-      "webkitbeginfullscreen",
-      () => {
-
-        videoFullscreen = true;
-
-        ui.style.display = "none";
-        toggleBtn.style.display = "none";
-
-      }
-    );
-
-
-    /* =========================================
+    /* ==========================
        CROSS COLOR
-    ========================================= */
+    ========================== */
 
     crossColorBtn.addEventListener(
       "click",
@@ -817,48 +548,31 @@
             : "white";
 
         drawCrosses();
+
       }
     );
 
 
-    /* =========================================
+    /* ==========================
        CROSS VISIBILITY
-    ========================================= */
+    ========================== */
 
     invertBtn.addEventListener(
       "click",
       () => {
 
-        invertMode = !invertMode;
+        invertMode =
+          !invertMode;
 
         drawCrosses();
+
       }
     );
 
 
-    /* =========================================
-       UI TOGGLE
-    ========================================= */
-
-    let uiVisible = true;
-
-    toggleBtn.addEventListener(
-      "click",
-      () => {
-
-        uiVisible = !uiVisible;
-
-        ui.style.display =
-          uiVisible
-            ? "flex"
-            : "none";
-      }
-    );
-
-
-    /* =========================================
+    /* ==========================
        COLORS
-    ========================================= */
+    ========================== */
 
     const colors = [
       "black",
@@ -872,93 +586,278 @@
       "purple"
     ];
 
+
     const colorButtons =
       document.getElementById(
         "colorButtons"
       );
 
-    colors.forEach(color => {
 
-      const btn =
-        document.createElement("div");
+    colors.forEach(
+      color => {
 
-      btn.className =
-        "color-btn";
+        const button =
+          document.createElement(
+            "div"
+          );
 
-      btn.style.backgroundColor =
-        color;
 
-      btn.addEventListener(
-        "click",
-        () => {
+        button.className =
+          "color-btn";
 
-          bgColor = color;
 
-          drawCrosses();
+        button.style.backgroundColor =
+          color;
+
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            bgColor = color;
+
+            drawCrosses();
+
+          }
+        );
+
+
+        colorButtons.appendChild(
+          button
+        );
+
+      }
+    );
+
+
+    /* ==========================
+       UI TOGGLE
+    ========================== */
+
+    let uiVisible = true;
+
+
+    toggleBtn.addEventListener(
+      "click",
+      () => {
+
+        uiVisible =
+          !uiVisible;
+
+
+        ui.style.display =
+          uiVisible
+            ? "flex"
+            : "none";
+
+      }
+    );
+
+
+    /* ==========================
+       FULLSCREEN
+    ========================== */
+
+    fullscreenBtn.addEventListener(
+      "click",
+      async () => {
+
+        /*
+          Если уже PWA —
+          мы уже без Safari UI.
+        */
+
+        if (isStandalone()) {
+
+          ui.style.display =
+            "none";
+
+          toggleBtn.style.display =
+            "none";
+
+          exitFullscreenBtn.style.display =
+            "block";
+
+          return;
         }
-      );
-
-      colorButtons.appendChild(btn);
-    });
 
 
-    /* =========================================
+        /*
+          Если браузер поддерживает
+          обычный Fullscreen API.
+        */
+
+        if (
+          document.documentElement
+            .requestFullscreen
+        ) {
+
+          try {
+
+            await document.documentElement
+              .requestFullscreen();
+
+
+            ui.style.display =
+              "none";
+
+            toggleBtn.style.display =
+              "none";
+
+            exitFullscreenBtn.style.display =
+              "block";
+
+            return;
+
+          } catch (error) {
+
+            console.log(
+              "Fullscreen:",
+              error
+            );
+
+          }
+
+        }
+
+
+        /*
+          iPhone Safari.
+          Показываем инструкцию.
+        */
+
+        installHint.style.display =
+          "block";
+
+      }
+    );
+
+
+    /* ==========================
+       EXIT FULLSCREEN
+    ========================== */
+
+    exitFullscreenBtn.addEventListener(
+      "click",
+      async () => {
+
+        /*
+          Browser fullscreen
+        */
+
+        if (
+          document.fullscreenElement
+        ) {
+
+          try {
+
+            await document.exitFullscreen();
+
+          } catch (error) {
+
+            console.log(error);
+
+          }
+
+        }
+
+
+        /*
+          В PWA кнопка выхода
+          просто возвращает UI.
+        */
+
+        ui.style.display =
+          "flex";
+
+        toggleBtn.style.display =
+          "flex";
+
+        exitFullscreenBtn.style.display =
+          "none";
+
+      }
+    );
+
+
+    /* ==========================
+       FULLSCREEN CHANGE
+    ========================== */
+
+    document.addEventListener(
+      "fullscreenchange",
+      () => {
+
+        if (
+          !document.fullscreenElement
+        ) {
+
+          ui.style.display =
+            "flex";
+
+          toggleBtn.style.display =
+            "flex";
+
+          exitFullscreenBtn.style.display =
+            "none";
+
+        }
+
+      }
+    );
+
+
+    /* ==========================
+       CLOSE INSTALL HINT
+    ========================== */
+
+    closeHint.addEventListener(
+      "click",
+      () => {
+
+        installHint.style.display =
+          "none";
+
+      }
+    );
+
+
+    /* ==========================
        TOUCH
-    ========================================= */
+    ========================== */
 
     function updateTouches(e) {
 
       const rect =
         canvas.getBoundingClientRect();
 
+
       touches = [];
 
 
-      /*
-        TouchEvent
-      */
-
-      if (e.touches) {
-
-        for (
-          const p of e.touches
-        ) {
-
-          touches.push({
-            x: p.clientX - rect.left,
-            y: p.clientY - rect.top
-          });
-        }
-
-      }
-
-      /*
-        PointerEvent / MouseEvent
-      */
-
-      else {
+      for (
+        const touch of e.touches
+      ) {
 
         touches.push({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
+
+          x:
+            touch.clientX -
+            rect.left,
+
+          y:
+            touch.clientY -
+            rect.top
+
         });
+
       }
 
-      drawCrosses();
-    }
-
-
-    function clearTouches() {
-
-      touches = [];
 
       drawCrosses();
+
     }
 
-
-    /* =========================================
-       TOUCH EVENTS CANVAS
-    ========================================= */
 
     canvas.addEventListener(
       "touchstart",
@@ -996,7 +895,9 @@
 
         e.preventDefault();
 
-        clearTouches();
+        touches = [];
+
+        drawCrosses();
 
       },
       {
@@ -1011,7 +912,9 @@
 
         e.preventDefault();
 
-        clearTouches();
+        touches = [];
+
+        drawCrosses();
 
       },
       {
@@ -1020,56 +923,30 @@
     );
 
 
-    /* =========================================
-       POINTER EVENTS
-    ========================================= */
-
-    canvas.addEventListener(
-      "pointerdown",
-      e => {
-
-        if (e.pointerType !== "mouse") {
-
-          updateTouches(e);
-        }
-      }
-    );
-
-
-    canvas.addEventListener(
-      "pointermove",
-      e => {
-
-        if (
-          e.pointerType !== "mouse" &&
-          e.buttons
-        ) {
-
-          updateTouches(e);
-        }
-      }
-    );
-
-
-    canvas.addEventListener(
-      "pointerup",
-      e => {
-
-        if (e.pointerType !== "mouse") {
-
-          clearTouches();
-        }
-      }
-    );
-
-
-    /* =========================================
+    /* ==========================
        MOUSE
-    ========================================= */
+    ========================== */
 
     canvas.addEventListener(
       "mousedown",
-      updateTouches
+      e => {
+
+        const rect =
+          canvas.getBoundingClientRect();
+
+        touches = [{
+          x:
+            e.clientX -
+            rect.left,
+
+          y:
+            e.clientY -
+            rect.top
+        }];
+
+        drawCrosses();
+
+      }
     );
 
 
@@ -1077,23 +954,46 @@
       "mousemove",
       e => {
 
-        if (e.buttons) {
+        if (!e.buttons)
+          return;
 
-          updateTouches(e);
-        }
+
+        const rect =
+          canvas.getBoundingClientRect();
+
+
+        touches = [{
+          x:
+            e.clientX -
+            rect.left,
+
+          y:
+            e.clientY -
+            rect.top
+        }];
+
+
+        drawCrosses();
+
       }
     );
 
 
     canvas.addEventListener(
       "mouseup",
-      clearTouches
+      () => {
+
+        touches = [];
+
+        drawCrosses();
+
+      }
     );
 
 
-    /* =========================================
+    /* ==========================
        RESIZE
-    ========================================= */
+    ========================== */
 
     window.addEventListener(
       "resize",
@@ -1109,15 +1009,58 @@
           resizeCanvas,
           300
         );
+
       }
     );
 
 
-    /* =========================================
-       START
-    ========================================= */
+    /* ==========================
+       INIT
+    ========================== */
 
     resizeCanvas();
+
+
+    /*
+      Если приложение уже запущено
+      как PWA — показываем кнопку Exit.
+    */
+
+    if (isStandalone()) {
+
+      fullscreenBtn.textContent =
+        "Fullscreen";
+
+    }
+
+
+    /*
+      Service Worker
+    */
+
+    if (
+      "serviceWorker" in navigator
+    ) {
+
+      window.addEventListener(
+        "load",
+        () => {
+
+          navigator.serviceWorker
+            .register("./sw.js")
+            .catch(error => {
+
+              console.log(
+                "Service Worker:",
+                error
+              );
+
+            });
+
+        }
+      );
+
+    }
 
   </script>
 
