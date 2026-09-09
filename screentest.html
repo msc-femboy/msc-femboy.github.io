@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
+  <!-- iPhone / iPad PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="screenexam" />
+
+  <!-- Android -->
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <title>screenexam</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: sans-serif;
+
+      /* iPhone safe areas */
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+
+      /* Запрещаем Safari двигать страницу при touch */
+      touch-action: none;
+      overscroll-behavior: none;
+
+      /* Не даём выделять элементы */
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    canvas {
+      position: fixed;
+      left: 0;
+      top: 0;
+
+      display: block;
+
+      width: 100vw;
+      height: 100vh;
+
+      width: 100dvw;
+      height: 100dvh;
+
+      touch-action: none;
+    }
+
+    /* Панель управления */
+    .ui {
+      position: fixed;
+
+      top: calc(10px + env(safe-area-inset-top));
+      left: calc(10px + env(safe-area-inset-left));
+
+      z-index: 10;
+
+      background: rgba(0, 0, 0, 0.65);
+      color: white;
+
+      padding: 10px 15px;
+
+      border-radius: 8px;
+
+      transition: opacity 0.3s;
+
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+
+      max-width: calc(100vw - 50px);
+    }
+
+    .ui button {
+      padding: 6px 10px;
+
+      border-radius: 6px;
+      border: none;
+
+      background-color: #444;
+      color: white;
+
+      cursor: pointer;
+
+      font-size: 14px;
+
+      touch-action: manipulation;
+    }
+
+    .ui button:active {
+      background-color: #666;
+    }
+
+    /* Кнопка скрытия UI */
+    .toggle-button {
+      position: fixed;
+
+      top: calc(5px + env(safe-area-inset-top));
+      right: calc(5px + env(safe-area-inset-right));
+
+      z-index: 20;
+
+      width: 30px;
+      height: 30px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: transparent;
+
+      cursor: pointer;
+
+      touch-action: manipulation;
+    }
+
+    .toggle-button span {
+      font-size: 14px;
+      color: white;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .toggle-button:hover span {
+      opacity: 1;
+    }
+
+    .color-buttons {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .color-btn {
+      width: 30px;
+      height: 30px;
+
+      cursor: pointer;
+
+      border: 1px solid white;
+      border-radius: 4px;
+
+      touch-action: manipulation;
+    }
+
+    .color-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Сообщение для iPhone */
+    #iosMessage {
+      position: fixed;
+
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+
+      transform: translateX(-50%);
+
+      z-index: 100;
+
+      display: none;
+
+      width: calc(100% - 40px);
+      max-width: 400px;
+
+      padding: 14px 18px;
+
+      border-radius: 12px;
+
+      background: rgba(20, 20, 20, 0.95);
+      color: white;
+
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.4;
+
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    #iosMessage button {
+      margin-top: 10px;
+
+      padding: 7px 12px;
+
+      border: none;
+      border-radius: 6px;
+
+      background: #444;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="ui" id="ui">
+
+    <button id="crossColorBtn">
+      Invert Crosses
+    </button>
+
+    <button id="invertBtn">
+      Cross Visibility
+    </button>
+
+    <button id="fullscreenBtn">
+      Fullscreen
+    </button>
+
+    <div class="color-buttons" id="colorButtons"></div>
+
+  </div>
+
+  <div class="toggle-button" id="toggleBtn">
+    <span>X</span>
+  </div>
+
+  <div id="iosMessage">
+    <div>
+      На iPhone Safari настоящий fullscreen
+      через JavaScript недоступен.
+    </div>
+
+    <div>
+      Для полного экрана добавьте страницу
+      на экран «Домой» и запускайте её оттуда.
+    </div>
+
+    <button id="closeIosMessage">
+      OK
+    </button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let invertMode = false;
+
+    let crossColor = 'white';
+    let bgColor = 'black';
+
+    let touches = [];
+
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    /*
+     * Определяем iPhone / iPad
+     */
+    function isIOS() {
+      return (
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (
+          navigator.platform === 'MacIntel' &&
+          navigator.maxTouchPoints > 1
+        )
+      );
+    }
+
+    /*
+     * Определяем standalone/PWA режим
+     */
+    function isStandalone() {
+      return (
+        window.navigator.standalone === true ||
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches
+      );
+    }
+
+    /*
+     * Размер canvas с учётом Retina
+     */
+    function resizeCanvas() {
+
+      const rect = canvas.getBoundingClientRect();
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+
+      canvasWidth = rect.width;
+      canvasHeight = rect.height;
+
+      canvas.width = Math.round(canvasWidth * dpr);
+      canvas.height = Math.round(canvasHeight * dpr);
+
+      ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+      );
+
+      drawCrosses();
+    }
+
+    /*
+     * Рисуем крестики
+     */
+    function drawCrosses() {
+
+      ctx.fillStyle = bgColor;
+
+      ctx.fillRect(
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
+
+      /*
+       * Крестики
+       */
+      if (!invertMode) {
+
+        ctx.fillStyle = crossColor;
+
+        const step = 45;
+        const crossSize = 25;
+        const thickness = 5;
+
+        for (
+          let y = step / 2;
+          y < canvasHeight;
+          y += step
+        ) {
+
+          for (
+            let x = step / 2;
+            x < canvasWidth;
+            x += step
+          ) {
+
+            drawCross(
+              x,
+              y,
+              crossSize,
+              thickness
+            );
+
+          }
+        }
+      }
+
+      /*
+       * Зелёные круги касания
+       */
+      ctx.fillStyle = 'rgba(5,130,0,0.9)';
+
+      touches.forEach(t => {
+
+        ctx.beginPath();
+
+        ctx.arc(
+          t.x,
+          t.y,
+          30,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fill();
+
+      });
+    }
+
+    /*
+     * Рисуем один крест
+     */
+    function drawCross(
+      x,
+      y,
+      size,
+      thickness
+    ) {
+
+      ctx.fillRect(
+        x - thickness / 2,
+        y - size / 2,
+        thickness,
+        size
+      );
+
+      ctx.fillRect(
+        x - size / 2,
+        y - thickness / 2,
+        size,
+        thickness
+      );
+    }
+
+    /*
+     * Resize
+     */
+    window.addEventListener(
+      'resize',
+      resizeCanvas
+    );
+
+    /*
+     * На iPhone изменение orientation
+     */
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        setTimeout(
+          resizeCanvas,
+          100
+        );
+      }
+    );
+
+    /*
+     * UI
+     */
+    const crossColorBtn =
+      document.getElementById('crossColorBtn');
+
+    const invertBtn =
+      document.getElementById('invertBtn');
+
+    const fullscreenBtn =
+      document.getElementById('fullscreenBtn');
+
+    const ui =
+      document.getElementById('ui');
+
+    const toggleBtn =
+      document.getElementById('toggleBtn');
+
+    /*
+     * Invert Crosses
+     */
+    crossColorBtn.addEventListener(
+      'click',
+      () => {
+
+        crossColor =
+          crossColor === 'white'
+            ? 'black'
+            : 'white';
+
+        drawCrosses();
+      }
+    );
+
+    /*
+     * Cross Visibility
+     */
+    invertBtn.addEventListener(
+      'click',
+      () => {
+
+        invertMode = !invertMode;
+
+        drawCrosses();
+      }
+    );
+
+    /*
+     * FULLSCREEN
+     */
+    fullscreenBtn.addEventListener(
+      'click',
+      async () => {
+
+        /*
+         * Если уже standalone на iPhone,
+         * мы и так в fullscreen.
+         */
+        if (
+          isIOS() &&
+          isStandalone()
+        ) {
+
+          return;
+        }
+
+        /*
+         * Fullscreen API
+         */
+        if (
+          document.documentElement.requestFullscreen
+        ) {
+
+          try {
+
+            if (
+              !document.fullscreenElement
+            ) {
+
+              await document.documentElement
+                .requestFullscreen();
+
+            } else if (
+              document.exitFullscreen
+            ) {
+
+              await document.exitFullscreen();
+
+            }
+
+            return;
+
+          } catch (error) {
+
+            console.log(
+              'Fullscreen API error:',
+              error
+            );
+          }
+        }
+
+        /*
+         * iPhone Safari fallback
+         */
+        if (isIOS()) {
+
+          document.getElementById(
+            'iosMessage'
+          ).style.display = 'block';
+
+          return;
+        }
+
+        /*
+         * Другой браузер
+         */
+        alert(
+          'Fullscreen недоступен в этом браузере.'
+        );
+      }
+    );
+
+    /*
+     * Закрыть сообщение iOS
+     */
+    document
+      .getElementById('closeIosMessage')
+      .addEventListener(
+        'click',
+        () => {
+
+          document.getElementById(
+            'iosMessage'
+          ).style.display = 'none';
+
+        }
+      );
+
+    /*
+     * Toggle UI
+     */
+    let uiVisible = true;
+
+    toggleBtn.addEventListener(
+      'click',
+      () => {
+
+        uiVisible = !uiVisible;
+
+        ui.style.display =
+          uiVisible ? 'flex' : 'none';
+
+      }
+    );
+
+    /*
+     * Цвета фона
+     */
+    const colors = [
+      'black',
+      'white',
+      '#303030',
+      '#808080',
+      'red',
+      'blue',
+      'green',
+      'yellow',
+      'purple'
+    ];
+
+    const colorButtons =
+      document.getElementById(
+        'colorButtons'
+      );
+
+    colors.forEach(
+      color => {
+
+        const btn =
+          document.createElement('div');
+
+        btn.className = 'color-btn';
+
+        btn.style.backgroundColor =
+          color;
+
+        btn.addEventListener(
+          'click',
+          () => {
+
+            bgColor = color;
+
+            drawCrosses();
+
+          }
+        );
+
+        colorButtons.appendChild(btn);
+
+      }
+    );
+
+    /*
+     * TOUCH
+     */
+    function updateTouches(e) {
+
+      touches = [];
+
+      const rect =
+        canvas.getBoundingClientRect();
+
+      const points =
+        e.touches
+          ? e.touches
+          : [e];
+
+      for (const p of points) {
+
+        touches.push({
+          x: p.clientX - rect.left,
+          y: p.clientY - rect.top
+        });
+
+      }
+
+      drawCrosses();
+    }
+
+    /*
+     * Touch start
+     */
+    canvas.addEventListener(
+      'touchstart',
+      updateTouches,
+      { passive: false }
+    );
+
+    /*
+     * Touch move
+     */
+    canvas.addEventListener(
+      'touchmove',
+      updateTouches,
+      { passive: false }
+    );
+
+    /*
+     * Touch end
+     */
+    canvas.addEventListener(
+      'touchend',
+      () => {
+
+        touches = [];
+
+        drawCrosses();
+
+      },
+      { passive: false }
+    );
+
+    /*
+     * Touch cancel
+     */
+    canvas.addEventListener(
+      'touchcancel',
+      () => {
+
+        touches = [];
+
+        drawCrosses();
+
+      },
+      { passive: false }
+    );
+
+    /*
+     * MOUSE
+     */
+    canvas.addEventListener(
+      'mousedown',
+      updateTouches
+    );
+
+    canvas.addEventListener(
+      'mousemove',
+      e => {
+
+        if (e.buttons) {
+
+          updateTouches(e);
+
+        }
+
+      }
+    );
+
+    canvas.addEventListener(
+      'mouseup',
+      () => {
+
+        touches = [];
+
+        drawCrosses();
+
+      }
+    );
+
+    /*
+     * Pointer events — дополнительно
+     * для современных браузеров
+     */
+    canvas.addEventListener(
+      'pointerdown',
+      e => {
+
+        if (e.pointerType !== 'mouse') {
+
+          updateTouches(e);
+
+        }
+
+      }
+    );
+
+    /*
+     * Скрываем сообщение, если уже PWA
+     */
+    if (isStandalone()) {
+
+      document.getElementById(
+        'iosMessage'
+      ).style.display = 'none';
+
+    }
+
+    /*
+     * Начальная отрисовка
+     */
+    resizeCanvas();
+  </script>
+
+</body>
+</html>
